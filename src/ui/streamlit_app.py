@@ -84,7 +84,7 @@ nav = st.sidebar.radio(
     options=["📊 Dashboard", "⚠️ Risk Analysis", "🔮 What-If Scenarios", "🤖 AI Advisor Chat"],
 )
 st.sidebar.markdown("---")
-st.sidebar.caption("Powered by LangChain · OpenAI GPT-4 · Streamlit")
+st.sidebar.caption("Powered by LangChain · Groq Llama 3.3 · Streamlit")
 
 # ---------------------------------------------------------------------------
 # Helper utilities
@@ -210,8 +210,8 @@ elif nav == "⚠️ Risk Analysis":
     # Quick AI summary button
     st.markdown("---")
     if st.button("🤖 Get AI Summary of Risks"):
-        if not os.getenv("OPENAI_API_KEY"):
-            st.error("Set OPENAI_API_KEY in your .env file to use AI features.")
+        if not (os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")):
+            st.error("Set GROQ_API_KEY (free) or OPENAI_API_KEY in your .env file to use AI features.")
         else:
             context = (
                 f"User {selected_user} has the following risk findings: {findings}. "

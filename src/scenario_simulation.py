@@ -23,11 +23,12 @@ def simulate_savings_increase(df, user_id: str, increase_pct: float, months: int
     metrics = financial_health_metrics(df, user_id)
     monthly_income = metrics["total_income"] / 12
     extra_savings = monthly_income * increase_pct * months
+    annual_extra  = monthly_income * increase_pct * 12
 
     return {
         "current_savings_rate": metrics["savings_rate"],
         "extra_savings": round(float(extra_savings), 2),
-        "projected_total": round(float(extra_savings), 2),
+        "projected_total": round(float(annual_extra), 2),
     }
 
 

@@ -93,10 +93,12 @@ def detect_risky_patterns(
     if user_df.empty:
         return findings
 
-    metrics      = financial_health_metrics(df, user_id)
-    income       = metrics["total_income"]
-    expenses     = metrics["total_expenses"]
-    savings_rate = metrics["savings_rate"]
+    # Recompute raw (unrounded) figures so threshold comparisons are exact
+    # — financial_health_metrics() rounds savings_rate to 2 dp which can
+    # mask boundary cases (e.g. 0.196 → 0.20 would otherwise pass a 0.20 floor).
+    income       = float(user_df[user_df["amount"] > 0]["amount"].sum())
+    expenses     = float(abs(user_df[user_df["amount"] < 0]["amount"].sum()))
+    savings_rate = ((income - expenses) / income) if income else 0.0
 
     # ── Overspending checks ──────────────────────────────────────────────────
     if expenses > income:
@@ -104,14 +106,16 @@ def detect_risky_patterns(
             "type":     "overspending",
             "severity": "high",
             "message":  "Expenses exceed income.",
-            "details":  {"income": income, "expenses": expenses, "savings_rate": savings_rate},
+            "details":  {"income": round(income, 2), "expenses": round(expenses, 2),
+                         "savings_rate": round(savings_rate, 2)},
         })
     elif income and (expenses / income) >= overspending_margin:
         findings.append({
             "type":     "overspending",
             "severity": "medium",
             "message":  "Expenses are close to income.",
-            "details":  {"income": income, "expenses": expenses, "ratio": round(expenses / income, 2)},
+            "details":  {"income": round(income, 2), "expenses": round(expenses, 2),
+                         "ratio": round(expenses / income, 2)},
         })
 
     # ── Low savings rate ─────────────────────────────────────────────────────
@@ -120,7 +124,7 @@ def detect_risky_patterns(
             "type":     "low_savings_rate",
             "severity": "medium",
             "message":  "Savings rate below target.",
-            "details":  {"savings_rate": savings_rate, "target": min_savings_rate},
+            "details":  {"savings_rate": round(savings_rate, 4), "target": min_savings_rate},
         })
 
     # ── Idle savings: decent income, very low savings rate ───────────────────
@@ -129,7 +133,7 @@ def detect_risky_patterns(
             "type":     "idle_savings",
             "severity": "low",
             "message":  "Income is healthy but savings rate is consistently low.",
-            "details":  {"income": income, "savings_rate": savings_rate},
+            "details":  {"income": round(income, 2), "savings_rate": round(savings_rate, 4)},
         })
 
     # ── Unusually large expenses: outliers by sigma or absolute threshold ────

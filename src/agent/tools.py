@@ -8,6 +8,13 @@ from src.scenario_simulation import (
 )
 
 
+def _df():
+    """Lazy accessor for the shared DataFrame (avoids circular imports)."""
+    from src.agent.agent_core import get_df
+
+    return get_df()
+
+
 @tool
 def analyze_financial_health(user_id: str) -> dict:
     """
@@ -27,8 +34,7 @@ def analyze_financial_health(user_id: str) -> dict:
             - savings_rate (float): Ratio of net savings to income (0 – 1).
             - category_spend (dict): Expense amounts keyed by category name.
     """
-    from src.agent.agent_core import df
-    return financial_health_metrics(df, user_id)
+    return financial_health_metrics(_df(), user_id)
 
 
 @tool
@@ -49,8 +55,7 @@ def check_risky_patterns(user_id: str) -> list:
             - message (str): Human-readable description.
             - details (dict): Supporting numeric evidence.
     """
-    from src.agent.agent_core import df
-    return detect_risky_patterns(df, user_id)
+    return detect_risky_patterns(_df(), user_id)
 
 
 @tool
@@ -70,8 +75,7 @@ def simulate_saving_more(user_id: str) -> dict:
             - extra_savings (float): Extra amount saved over the 12-month window.
             - projected_total (float): Same as extra_savings (annual figure).
     """
-    from src.agent.agent_core import df
-    return simulate_savings_increase(df, user_id, 0.10, 12)
+    return simulate_savings_increase(_df(), user_id, 0.10, 12)
 
 
 @tool
@@ -92,8 +96,7 @@ def simulate_expense_cut(user_id: str) -> dict:
             - total_savings_gained (float): Total extra savings over 12 months.
             - new_savings_rate (float): Estimated savings rate after the cut.
     """
-    from src.agent.agent_core import df
-    return simulate_expense_reduction(df, user_id, 0.15, 12)
+    return simulate_expense_reduction(_df(), user_id, 0.15, 12)
 
 
 @tool
@@ -113,5 +116,4 @@ def simulate_investment(user_id: str) -> dict:
             - projected_portfolio_value (float): Estimated value after 10 years.
             - total_interest_earned (float): Growth earned on top of contributions.
     """
-    from src.agent.agent_core import df
-    return simulate_investment_growth(df, user_id, 0.07, 10)
+    return simulate_investment_growth(_df(), user_id, 0.07, 10)

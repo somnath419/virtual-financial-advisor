@@ -200,6 +200,11 @@ class TestGeneratorAgent:
         """
         module_name = Path(self.module_path).stem
         import_path = self._import_path()
+        if not self._functions:
+            return (
+                f'"""Auto-generated test stubs for {module_name}."""\n'
+                f"# No public functions detected in {self.module_path}.\n"
+            )
         lines = [
             f'"""Auto-generated test stubs for {module_name}."""',
             "import pytest",
@@ -212,6 +217,7 @@ class TestGeneratorAgent:
                 f"def {test_name}():",
                 f'    """Stub: test {fn.name} with basic inputs."""',
                 f"    # TODO: replace None with real test data",
+                f"    pytest.skip('auto-generated stub – fill in real assertions')",
                 f"    result = {fn.name}({args_placeholder})",
                 f"    assert result is not None\n\n",
             ]

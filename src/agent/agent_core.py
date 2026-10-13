@@ -42,7 +42,8 @@ from src.genai_interface import get_llm
 load_dotenv()
 
 # ---------------------------------------------------------------------------
-# Shared DataFrame – loaded once; all tools import `df` from here
+# Shared DataFrame – lazy-loaded so that importing this module never crashes
+# in environments where the CSV is missing (CI, partial Docker images, tests).
 # ---------------------------------------------------------------------------
 DATA_PATH = os.getenv(
     "DATA_PATH",
@@ -52,7 +53,23 @@ DATA_PATH = os.getenv(
         "data", "virtual_financial_advisor_data.csv",
     ),
 )
-df = load_data(DATA_PATH)
+
+_df_cache: Any = None
+
+
+def get_df():
+    """Return the cached transaction DataFrame, loading it on first access."""
+    global _df_cache
+    if _df_cache is None:
+        _df_cache = load_data(DATA_PATH)
+    return _df_cache
+
+
+def __getattr__(name):  # PEP 562 – module-level lazy attribute
+    """Backwards compatibility: ``from src.agent.agent_core import df`` still works."""
+    if name == "df":
+        return get_df()
+    raise AttributeError(f"module 'agent_core' has no attribute {name!r}")
 
 # ---------------------------------------------------------------------------
 # Registered tools
